@@ -1,45 +1,66 @@
-# datastax-example-template
-A short few sentences describing what is the purpose of the example and what the user will learn
+# Spark Streaming with Kafka Direct API Demo
+ 
+This demo simulates a stream of email metadata.  This example assumes the user has an existing Kafka cluster with email data formatted as "**msg_id::tenant_id::mailbox_id::time_delivered::time_forwarded::time_read::time_replied**". 
+It is assumed these fields have the following datatypes: 
 
-e.g.
-This application shows how to use configure your NodeJs application to connect to DDAC/Cassandra/DSE or an Apollo database at runtime.
+* msg_id: String
+* tenant_id: UUID
+* mailbox_id: UUID
+* time_delivered: Long
+* time_forwarded: Long
+* time_read: Long
+* time_replied: Long
 
-Contributors: A listing of contributors to this repository linked to their github profile
+### Setup the KS/Table
 
-## Objectives
-A list of the top objectives that are being demonstrated by this sample
+**Note: You can change RF and compaction settings in this CQL script if needed.**
 
-e.g.
-* To demonstrate how to specify at runtime between a standard (DSE/DDAC/C*) client configuration and an Apollo configuration for the same application.
-  
-## Project Layout
-A list of key files within this repo and a short 1-2 sentence description of why they are important to the project
+`cqlsh -f data_model/email_db.cql` 
 
-e.g.
-* app.js - The main application file which contains all the logic to switch between the configurations
+### Run Spark Streaming
 
-## How this Sample Works
-A description of how this sample works and how it demonstrates the objectives outlined above
+###### Build the streaming jar
+`sbt streaming/assembly`
 
-## Setup and Running
+Parameters:
 
-### Prerequisites
-The prerequisites required for this application to run
+1. kafka broker: Ex. 10.200.185.103:9092 
 
-e.g.
-* NodeJs version 8
-* A DSE 6.7 Cluster
-* Schema added to the cluster
+2. debug flag (limited use): Ex. true or false 
 
-### Running
-The steps and configuration needed to run and build this application
+3. checkpoint directory name: Ex. dsefs://[optional-ip-address]/emails_checkpoint
 
-e.g.
-To run this application use the following command:
+4. [spark.streaming.kafka.maxRatePerPartition](http://spark.apache.org/docs/latest/configuration.html#spark-streaming): Maximum rate (number of records per second) 
 
-`node app.js`
+5. batch interval (ms) 
 
-This will produce the following output:
+6. [auto.offset.reset](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.streaming.kafka.KafkaUtils$): Ex. smallest or largest
 
-`Connected to cluster with 3 host(s) ["XX.XX.XX.136:9042","XX.XX.XX.137:9042","XX.XX.XX.138:9042"]`
+7. topic name 
 
+8. kafka stream type: ex. direct or receiver
+
+9. number of partitions to consume per topic (controls read parallelism) (receiver approach: you'll want to match whatever used when creating the topic) 
+
+10. processesing parallelism (controls write parallelism) (receiver approach: you'll want to match whatever used when creating the topic) 
+
+11. group.id that id's the consumer processes (receiver approach: you'll want to match whatever used when creating the topic) 
+
+12. zookeeper connect string (e.g localhost:2181) (receiver approach: you'll want to match whatever used when creating the topic) 
+
+###### Running on a server in foreground
+`dse spark-submit --driver-memory 2G --class sparkKafkaDemo.StreamingDirectEmails streaming/target/scala-2.10/streaming-assembly-0.1.jar <kafka-broker-ip>:9092 true dsefs://[optional-ip-address]/emails_checkpoint 50000 5000 smallest emails direct 1 100 test-consumer-group localhost:2181`
+
+## Support
+
+The code, examples, and snippets provided in this repository are not "Supported Software" under any DataStax subscriptions or other agreements.
+
+## License
+
+Copyright 2016, DataStax
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
