@@ -1,3 +1,5 @@
+# Incomplete - WIP - Do Not Use
+
 # Spark Streaming with Kafka Direct API Demo
  
 This demo simulates a stream of email metadata.  This example assumes the user has an existing Kafka cluster with email data formatted as "**msg_id::tenant_id::mailbox_id::time_delivered::time_forwarded::time_read::time_replied**". 
